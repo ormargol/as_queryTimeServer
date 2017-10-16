@@ -322,20 +322,20 @@ void dg_snd( int sockfd, struct sockaddr * pcliaddr, socklen_t servlen)
 
 	NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
+        fprintf(stderr,"T1[org]: %s.%10u\n",buffer,prt->org.Ul_f.Xl_f);
 
 
 	NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T2[rec]: %s.%u\n",buffer,prt->rec.Ul_f.Xl_f);
+        fprintf(stderr,"T2[rec]: %s.%10u\n",buffer,prt->rec.Ul_f.Xl_f);
 
 
 
 	NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T3[xmt]: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
+        fprintf(stderr,"T3[xmt]: %s.%10u\n",buffer,prt->xmt.Ul_f.Xl_f);
 strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
-fprintf(stderr, "T4[ret]: %s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
+fprintf(stderr, "T4[ret]: %s.%10u\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
 
 	free(msg);
         free(prt);
