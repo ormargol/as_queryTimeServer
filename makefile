@@ -1,6 +1,6 @@
 .PHONY: all clean run
 all:
-	gcc -o queryTimeServer -Wall -W -O2 -s -pipe queryTimeServer.c
+	gcc -o queryTimeServer -Wall -W -O2 -s -pipe -pthread queryTimeServer.c
 clean:
 	rm -f queryTimeServer
 	rm -f *~

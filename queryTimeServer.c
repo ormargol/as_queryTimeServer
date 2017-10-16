@@ -117,6 +117,7 @@ http://www.eecis.udel.edu/~mills/database/rfc/rfc2030.txt
 #include <unistd.h>
 #include <stdint.h>
 #include <math.h>
+#include <pthread.h>
 
 
 
@@ -298,7 +299,8 @@ void establish_connection() {
 
 }
 
-void send_request() {
+void* send_requests(void* arg) {
+  if (arg) { return arg; }
   int len;
   struct timeval tv_t1;
   struct pkt *msg = basic;
@@ -308,18 +310,21 @@ void send_request() {
   msg->precision=-6;
   msg->rootdelay=256;
   msg->rootdispersion=256;
+  while (1) {
+    gettimeofday(&tv_t1, NULL);
+    msg->org.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
+    msg->org.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
 
-  gettimeofday(&tv_t1, NULL);
-  msg->org.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
-  msg->org.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
+    len=48;
+    sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
+    sleep(1);
+  }
 
-  len=48;
-  sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
-
-	free(msg);
+	//free(msg);
 }
 
-void wait_response() {
+void* wait_responses(void* arg) {
+  if (arg) { return arg; }
   char buffer[30];
   struct timeval tv_t4;
   struct pkt *msg;
@@ -330,6 +335,7 @@ void wait_response() {
   prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
 
   len=48;
+  while (1) {
 	n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
   if ( n < 0 )
     error( "ERROR reading from socket" );
@@ -355,8 +361,8 @@ void wait_response() {
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
         fprintf(stderr,"T3[xmt]: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
 strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
-fprintf(stderr, "T4[ret]: %s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
-
+fprintf(stderr, "T4[ret]: %s.%u\n\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
+}
 	free(msg);
         free(prt);
 }
@@ -498,9 +504,13 @@ int main(int argc, char **argv)
 
 	if (connect(sockfd, (SA *) & servaddr, sizeof(servaddr)) == -1 )
 	  fprintf(stderr,"Error in connect \n");
+
   establish_connection();
-  send_request();
-  wait_response();
+  pthread_t writetrd, readtrd;
+  pthread_create(&writetrd, NULL, send_requests, NULL);
+  pthread_create(&readtrd, NULL, wait_responses, NULL);
+  pthread_join(readtrd, NULL);
+
         close(sockfd);
     
   exit(0);
