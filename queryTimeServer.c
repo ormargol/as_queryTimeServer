@@ -262,12 +262,10 @@ void dg_snd( int sockfd, struct sockaddr * pcliaddr, socklen_t servlen)
   char buffer[30];
 
   time_t seconds;
-
+  struct timeval tv_t1, tv_t4;
 
   struct pkt *msg;
   struct pkt *prt;
-
-
 
   msg= (struct pkt *) malloc(sizeof(struct pkt)*1);
   prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
@@ -299,16 +297,13 @@ void dg_snd( int sockfd, struct sockaddr * pcliaddr, socklen_t servlen)
   msg->rootdelay=256;
   msg->rootdispersion=256;
 
-  msg->ref.Ul_i.Xl_i= msg->xmt.Ul_i.Xl_i;
-  msg->ref.Ul_f.Xl_f= msg->xmt.Ul_f.Xl_f;
+  gettimeofday(&tv_t1, NULL);
+  msg->org.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
+  msg->org.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
 
-  msg->org.Ul_i.Xl_i= msg->xmt.Ul_i.Xl_i;
-  msg->org.Ul_f.Xl_f= msg->xmt.Ul_f.Xl_f;
-
-
-
-
-
+  sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
+	n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
+  gettimeofday(&tv_t4, NULL);
 
   NTOHL_FP(&msg->ref, &prt->ref);
   NTOHL_FP(&msg->org, &prt->org);
@@ -317,21 +312,20 @@ void dg_snd( int sockfd, struct sockaddr * pcliaddr, socklen_t servlen)
 
 	NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"org: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
+        fprintf(stderr,"T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
 
 
 	NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"rec: %s.%u\n",buffer,prt->rec.Ul_f.Xl_f);
+        fprintf(stderr,"T2[rec]: %s.%u\n",buffer,prt->rec.Ul_f.Xl_f);
 
 
 
 	NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"xmt: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
-
-        fprintf(stderr,"*************   3nd STOP  *******************\n");
-
+        fprintf(stderr,"T3[xmt]: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
+strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
+fprintf(stderr, "T4[ret]: %s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
 
 	free(msg);
         free(prt);
