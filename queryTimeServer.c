@@ -116,6 +116,7 @@ http://www.eecis.udel.edu/~mills/database/rfc/rfc2030.txt
 #include <netdb.h>
 #include <unistd.h>
 #include <stdint.h>
+#include <math.h>
 
 
 
@@ -155,7 +156,12 @@ http://www.eecis.udel.edu/~mills/database/rfc/rfc2030.txt
 extern int h_errno;
 
 
+void error( char* msg )
+{
+    perror( msg ); // Print the error message to stderr.
 
+    exit( 0 ); // Quit the process.
+}
 
 
 /*
@@ -289,6 +295,8 @@ void dg_snd( int sockfd, struct sockaddr * pcliaddr, socklen_t servlen)
 
   sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
   n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
+  if ( n < 0 )
+    error( "ERROR reading from socket" );
 
   msg->li_vn_mode=227;
   msg->stratum=0;
@@ -303,6 +311,8 @@ void dg_snd( int sockfd, struct sockaddr * pcliaddr, socklen_t servlen)
 
   sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
 	n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
+  if ( n < 0 )
+    error( "ERROR reading from socket" );
   gettimeofday(&tv_t4, NULL);
 
   NTOHL_FP(&msg->ref, &prt->ref);
