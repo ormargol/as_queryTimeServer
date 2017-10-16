@@ -257,7 +257,109 @@ struct pkt {
 
 
 
+int sockfd;
+struct sockaddr *pcliaddr;
+socklen_t servlen;
+struct pkt *basic;
 
+void establish_connection() {
+
+  int n;
+  int len;
+
+  struct pkt *msg;
+
+  msg= (struct pkt *) malloc(sizeof(struct pkt)*1);
+  basic = (struct pkt *) malloc(sizeof(struct pkt)*1);
+
+  msg->li_vn_mode=227;
+  msg->stratum=0;
+  msg->ppoll=4;
+  msg->precision=0;
+  msg->rootdelay=0;
+  msg->rootdispersion=0;
+  msg->ref.Ul_i.Xl_i=0;
+  msg->ref.Ul_f.Xl_f=0;
+  msg->org.Ul_i.Xl_i=0;
+  msg->org.Ul_f.Xl_f=0;
+  msg->rec.Ul_i.Xl_i=0;
+  msg->rec.Ul_f.Xl_f=0;
+  msg->xmt.Ul_i.Xl_i=0;
+  msg->xmt.Ul_f.Xl_f=0;
+
+  len=48;
+
+  sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
+  n = recvfrom(sockfd, basic, len, 0, NULL, NULL);
+  if ( n < 0 )
+    error( "ERROR reading from socket" );
+
+	free(msg);
+
+}
+
+void send_request() {
+  int len;
+  struct timeval tv_t1;
+  struct pkt *msg = basic;
+  msg->li_vn_mode=227;
+  msg->stratum=0;
+  msg->ppoll=4;
+  msg->precision=-6;
+  msg->rootdelay=256;
+  msg->rootdispersion=256;
+
+  gettimeofday(&tv_t1, NULL);
+  msg->org.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
+  msg->org.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
+
+  len=48;
+  sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
+
+	free(msg);
+}
+
+void wait_response() {
+  char buffer[30];
+  struct timeval tv_t4;
+  struct pkt *msg;
+  struct pkt *prt;
+  int n, len;
+  time_t seconds;
+  msg= (struct pkt *) malloc(sizeof(struct pkt)*1);
+  prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
+
+  len=48;
+	n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
+  if ( n < 0 )
+    error( "ERROR reading from socket" );
+  gettimeofday(&tv_t4, NULL);
+
+  NTOHL_FP(&msg->ref, &prt->ref);
+  NTOHL_FP(&msg->org, &prt->org);
+  NTOHL_FP(&msg->rec, &prt->rec);
+  NTOHL_FP(&msg->xmt, &prt->xmt);
+
+	NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
+        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
+        fprintf(stderr,"T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
+
+
+	NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
+        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
+        fprintf(stderr,"T2[rec]: %s.%u\n",buffer,prt->rec.Ul_f.Xl_f);
+
+
+
+	NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
+        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
+        fprintf(stderr,"T3[xmt]: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
+strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
+fprintf(stderr, "T4[ret]: %s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
+
+	free(msg);
+        free(prt);
+}
 
 
 
@@ -362,9 +464,9 @@ int main(int argc, char **argv)
 		exit(1);
 	}
 
-
-	int sockfd;
 	struct sockaddr_in servaddr;
+  pcliaddr = (struct sockaddr*)&servaddr;
+  servlen = sizeof(servaddr);
 	char **pptr;
 
 
@@ -396,7 +498,9 @@ int main(int argc, char **argv)
 
 	if (connect(sockfd, (SA *) & servaddr, sizeof(servaddr)) == -1 )
 	  fprintf(stderr,"Error in connect \n");
-        dg_snd(sockfd, (struct sockaddr *) &servaddr, sizeof(servaddr));
+  establish_connection();
+  send_request();
+  wait_response();
         close(sockfd);
     
   exit(0);
