@@ -282,24 +282,24 @@ void* wait_responses(void* arg) {
 	  NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
     strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
     fractional = ((double)prt->org.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
-    fprintf(stderr,"%s.%u, ",buffer,fractional);
+    fprintf(stdout,"%s.%u, ",buffer,fractional);
 
 
 	  NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
     strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
     fractional = ((double)prt->rec.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
-    fprintf(stderr,"%s.%u, ",buffer,fractional);
+    fprintf(stdout,"%s.%u, ",buffer,fractional);
 
 
 
 	  NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
     strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
     fractional = ((double)prt->xmt.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
-    fprintf(stderr,"%s.%u, ",buffer,fractional);
+    fprintf(stdout,"%s.%u, ",buffer,fractional);
 
     strftime(buffer, 30, "%m-%d-%Y %T", localtime(&tv_t4.tv_sec));
-    fprintf(stderr, "%s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec));
-    if(count++ == results_count) {
+    fprintf(stdout, "%s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec));
+    if(++count == results_count) {
       return NULL;
     }
   }
