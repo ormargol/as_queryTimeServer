@@ -266,35 +266,36 @@ void* wait_responses(void* arg) {
 
   len=48;
   while (1) {
-	n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
-  if ( n < 0 )
-    error( "ERROR reading from socket" );
-  gettimeofday(&tv_t4, NULL);
+	  n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
+    if ( n < 0 )
+      error( "ERROR reading from socket" );
+    gettimeofday(&tv_t4, NULL);
 
-  NTOHL_FP(&msg->ref, &prt->ref);
-  NTOHL_FP(&msg->org, &prt->org);
-  NTOHL_FP(&msg->rec, &prt->rec);
-  NTOHL_FP(&msg->xmt, &prt->xmt);
+    NTOHL_FP(&msg->ref, &prt->ref);
+    NTOHL_FP(&msg->org, &prt->org);
+    NTOHL_FP(&msg->rec, &prt->rec);
+    NTOHL_FP(&msg->xmt, &prt->xmt);
 
-	NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
-        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
-
-
-	NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
-        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T2[rec]: %s.%u\n",buffer,prt->rec.Ul_f.Xl_f);
+	  NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
+    strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
+    fprintf(stderr,"T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
 
 
+	  NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
+    strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
+    fprintf(stderr,"T2[rec]: %s.%u\n",buffer,prt->rec.Ul_f.Xl_f);
 
-	NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
-        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T3[xmt]: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
-strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
-fprintf(stderr, "T4[ret]: %s.%u\n\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
-}
+
+
+	  NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
+    strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
+    fprintf(stderr,"T3[xmt]: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
+
+    strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
+    fprintf(stderr, "T4[ret]: %s.%u\n\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
+  }
 	free(msg);
-        free(prt);
+  free(prt);
 }
 
 int main(int argc, char **argv)
@@ -306,7 +307,6 @@ int main(int argc, char **argv)
 			"./queryTimeServer timex.usg.edu\n"
 			"./queryTimeServer ntp.linux.org.ve\n"
 			"./queryTimeServer ntp.pop-pr.rnp.br\n\n"  
-
 			);
 		exit(1);
 	}
@@ -324,14 +324,13 @@ int main(int argc, char **argv)
 
 	if (hptr->h_addrtype == AF_INET
 	    && (pptr = hptr->h_addr_list) != NULL) {
-
 		inet_ntop(hptr->h_addrtype, *pptr, str, sizeof(str));
 	} else {
 		fprintf(stderr, "Error call inet_ntop \n");
 	}
 
 	sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-        if (sockfd == -1)
+  if (sockfd == -1)
 	  fprintf(stderr,"Error in socket \n");
 	bzero(&servaddr, sizeof(servaddr));
 	servaddr.sin_family = AF_INET;
