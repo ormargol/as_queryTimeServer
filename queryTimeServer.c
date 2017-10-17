@@ -261,49 +261,12 @@ struct pkt {
 int sockfd;
 struct sockaddr *pcliaddr;
 socklen_t servlen;
-struct pkt *basic;
-
-void establish_connection() {
-
-  int n;
-  int len;
-
-  struct pkt *msg;
-
-  msg= (struct pkt *) malloc(sizeof(struct pkt)*1);
-  basic = (struct pkt *) malloc(sizeof(struct pkt)*1);
-
-  msg->li_vn_mode=227;
-  msg->stratum=0;
-  msg->ppoll=4;
-  msg->precision=0;
-  msg->rootdelay=0;
-  msg->rootdispersion=0;
-  msg->ref.Ul_i.Xl_i=0;
-  msg->ref.Ul_f.Xl_f=0;
-  msg->org.Ul_i.Xl_i=0;
-  msg->org.Ul_f.Xl_f=0;
-  msg->rec.Ul_i.Xl_i=0;
-  msg->rec.Ul_f.Xl_f=0;
-  msg->xmt.Ul_i.Xl_i=0;
-  msg->xmt.Ul_f.Xl_f=0;
-
-  len=48;
-
-  sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
-  n = recvfrom(sockfd, basic, len, 0, NULL, NULL);
-  if ( n < 0 )
-    error( "ERROR reading from socket" );
-
-	free(msg);
-
-}
 
 void* send_requests(void* arg) {
   if (arg) { return arg; }
   int len;
   struct timeval tv_t1;
-  struct pkt *msg = basic;
+  struct pkt *msg = (struct pkt *) malloc(sizeof(struct pkt)*1);//basic;
   char buffer[30];
   time_t seconds;
   struct pkt *prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
@@ -328,6 +291,7 @@ void* send_requests(void* arg) {
   }
 
 	free(prt);
+	free(msg);
 }
 
 void* wait_responses(void* arg) {
@@ -512,7 +476,6 @@ int main(int argc, char **argv)
 	if (connect(sockfd, (SA *) & servaddr, sizeof(servaddr)) == -1 )
 	  fprintf(stderr,"Error in connect \n");
 
-  establish_connection();
   pthread_t writetrd, readtrd;
   pthread_create(&writetrd, NULL, send_requests, NULL);
   pthread_create(&readtrd, NULL, wait_responses, NULL);
