@@ -5,4 +5,4 @@ clean:
 	rm -f queryTimeServer
 	rm -f *~
 run:
-	./queryTimeServer 1.asia.pool.ntp.org
+	./queryTimeServer 1.asia.pool.ntp.org 10

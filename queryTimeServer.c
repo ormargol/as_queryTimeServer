@@ -231,6 +231,8 @@ int sockfd;
 struct sockaddr *pcliaddr;
 socklen_t servlen;
 
+unsigned int results_count;
+
 void* send_requests(void* arg) {
   if (arg) { return arg; }
   int len;
@@ -248,7 +250,6 @@ void* send_requests(void* arg) {
     msg->xmt.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
     len=48;
     sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
-    sleep(1);
   }
 	free(msg);
 }
@@ -262,6 +263,7 @@ void* wait_responses(void* arg) {
   int n, len;
   time_t seconds;
   uint32_t fractional;
+  unsigned int count = 0;
   msg= (struct pkt *) malloc(sizeof(struct pkt)*1);
   prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
 
@@ -280,23 +282,26 @@ void* wait_responses(void* arg) {
 	  NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
     strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
     fractional = ((double)prt->org.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
-    fprintf(stderr,"%s.%u, ",buffer,fractional);//((double)prt->org.Ul_f.Xl_uf / pow(2, 32)) * 1000000);
+    fprintf(stderr,"%s.%u, ",buffer,fractional);
 
 
 	  NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
     strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
     fractional = ((double)prt->rec.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
-    fprintf(stderr,"%s.%u, ",buffer,fractional);//prt->rec.Ul_f.Xl_f);
+    fprintf(stderr,"%s.%u, ",buffer,fractional);
 
 
 
 	  NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
     strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
     fractional = ((double)prt->xmt.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
-    fprintf(stderr,"%s.%u, ",buffer,fractional);//prt->xmt.Ul_f.Xl_f);
+    fprintf(stderr,"%s.%u, ",buffer,fractional);
 
     strftime(buffer, 30, "%m-%d-%Y %T", localtime(&tv_t4.tv_sec));
-    fprintf(stderr, "%s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec));// * (pow(2,26) / pow(5, 6))));
+    fprintf(stderr, "%s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec));
+    if(count++ == results_count) {
+      return NULL;
+    }
   }
 	free(msg);
   free(prt);
@@ -304,16 +309,14 @@ void* wait_responses(void* arg) {
 
 int main(int argc, char **argv)
 {
-	if (argc < 2) {
-		fprintf(stderr,
-			"./queryTimeServer timeserver1.upenn.edu\n"
-                        "or\n"      
-			"./queryTimeServer timex.usg.edu\n"
-			"./queryTimeServer ntp.linux.org.ve\n"
-			"./queryTimeServer ntp.pop-pr.rnp.br\n\n"  
-			);
+	if (argc != 3) {
+		fprintf(stderr, "./queryTimeServer SERVER_NAME RESULTS_COUNT\n");
 		exit(1);
 	}
+  if (sscanf(argv[2], "%u", &results_count) != 1) {
+    fprintf(stderr, "RESULTS_COUNT has to be unsigned integer\n");
+    exit(1);
+  }
 	struct sockaddr_in servaddr;
   pcliaddr = (struct sockaddr*)&servaddr;
   servlen = sizeof(servaddr);
