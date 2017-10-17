@@ -327,7 +327,7 @@ void* send_requests(void* arg) {
     sleep(1);
   }
 
-	//free(msg);
+	free(prt);
 }
 
 void* wait_responses(void* arg) {
