@@ -88,17 +88,7 @@ http://www.eecis.udel.edu/~mills/database/rfc/rfc2030.txt
    Transmit Timestamp: This is the time at which the reply departed the
    server for the client, in 64-bit timestamp format.
 
-
-
-
-
-
-
-
-
-
 */
-
 
 #include <arpa/inet.h>
 #include <assert.h>
@@ -119,8 +109,6 @@ http://www.eecis.udel.edu/~mills/database/rfc/rfc2030.txt
 #include <math.h>
 #include <pthread.h>
 
-
-
 /*
  * Time of day conversion constant.  Ntp's time scale starts in 1900,
  * Unix in 1970.
@@ -137,11 +125,6 @@ http://www.eecis.udel.edu/~mills/database/rfc/rfc2030.txt
 #define NTOHL_FP(n, h)  do { (h)->l_ui = ntohl((n)->l_ui); \
                              (h)->l_uf = ntohl((n)->l_uf); } while (0)
 
-
-
-
-
-
 #define SA      struct sockaddr
 #define MAXLINE 16384
 #define READMAX 16384		//must be less than MAXLINE or equal
@@ -156,14 +139,12 @@ http://www.eecis.udel.edu/~mills/database/rfc/rfc2030.txt
 
 extern int h_errno;
 
-
 void error( char* msg )
 {
     perror( msg ); // Print the error message to stderr.
 
     exit( 0 ); // Quit the process.
 }
-
 
 /*
  * NTP uses two fixed point formats.  The first (l_fp) is the "long"
@@ -198,16 +179,10 @@ typedef struct {
   } Ul_f;
 } l_fp;
 
-
 #define l_ui    Ul_i.Xl_ui              /* unsigned integral part */
 #define l_i     Ul_i.Xl_i               /* signed integral part */
 #define l_uf    Ul_f.Xl_uf              /* unsigned fractional part */
 #define l_f     Ul_f.Xl_f               /* signed fractional part */
-
-
-
-
-
 
 #define HTONL_F(f, nts) do { (nts)->l_uf = htonl(f); \
                                 if ((f) & 0x80000000) \
@@ -215,10 +190,6 @@ typedef struct {
                                 else \
                                         (nts)->l_i = 0; \
                         } while (0)
-
-
-
-
 
 struct pkt {
   uint8_t  li_vn_mode;     /* leap indicator, version and mode */
@@ -255,8 +226,6 @@ struct pkt {
 #endif /* OPENSSL */
   uint8_t  mac[MAX_MAC_LEN]; /* mac */
 };
-
-
 
 int sockfd;
 struct sockaddr *pcliaddr;
@@ -328,97 +297,8 @@ fprintf(stderr, "T4[ret]: %s.%u\n\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,
         free(prt);
 }
 
-
-
-void dg_snd( int sockfd, struct sockaddr * pcliaddr, socklen_t servlen)
-{
-  int n;
-  int len;
-  char buffer[30];
-
-  time_t seconds;
-  struct timeval tv_t1, tv_t4;
-
-  struct pkt *msg;
-  struct pkt *prt;
-
-  msg= (struct pkt *) malloc(sizeof(struct pkt)*1);
-  prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
-
-  msg->li_vn_mode=227;
-  msg->stratum=0;
-  msg->ppoll=4;
-  msg->precision=0;
-  msg->rootdelay=0;
-  msg->rootdispersion=0;
-  msg->ref.Ul_i.Xl_i=0;
-  msg->ref.Ul_f.Xl_f=0;
-  msg->org.Ul_i.Xl_i=0;
-  msg->org.Ul_f.Xl_f=0;
-  msg->rec.Ul_i.Xl_i=0;
-  msg->rec.Ul_f.Xl_f=0;
-  msg->xmt.Ul_i.Xl_i=0;
-  msg->xmt.Ul_f.Xl_f=0;
-
-  len=48;
-
-  sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
-  n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
-  if ( n < 0 )
-    error( "ERROR reading from socket" );
-
-  msg->li_vn_mode=227;
-  msg->stratum=0;
-  msg->ppoll=4;
-  msg->precision=-6;
-  msg->rootdelay=256;
-  msg->rootdispersion=256;
-
-  gettimeofday(&tv_t1, NULL);
-  msg->org.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
-  msg->org.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
-
-  sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
-	n = recvfrom(sockfd, msg, len, 0, NULL, NULL);
-  if ( n < 0 )
-    error( "ERROR reading from socket" );
-  gettimeofday(&tv_t4, NULL);
-
-  NTOHL_FP(&msg->ref, &prt->ref);
-  NTOHL_FP(&msg->org, &prt->org);
-  NTOHL_FP(&msg->rec, &prt->rec);
-  NTOHL_FP(&msg->xmt, &prt->xmt);
-
-	NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
-        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T1[org]: %s.%10u\n",buffer,prt->org.Ul_f.Xl_f);
-
-
-	NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
-        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T2[rec]: %s.%10u\n",buffer,prt->rec.Ul_f.Xl_f);
-
-
-
-	NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
-        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"T3[xmt]: %s.%10u\n",buffer,prt->xmt.Ul_f.Xl_f);
-strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
-fprintf(stderr, "T4[ret]: %s.%10u\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
-
-	free(msg);
-        free(prt);
-
-}
-
-
-
-
-
 int main(int argc, char **argv)
 {
-
-
 	if (argc < 2) {
 		fprintf(stderr,
 			"./queryTimeServer timeserver1.upenn.edu\n"
@@ -430,15 +310,10 @@ int main(int argc, char **argv)
 			);
 		exit(1);
 	}
-
 	struct sockaddr_in servaddr;
   pcliaddr = (struct sockaddr*)&servaddr;
   servlen = sizeof(servaddr);
 	char **pptr;
-
-
-
-
 	char str[50];
 	struct hostent *hptr;
 	if ((hptr = gethostbyname(argv[1])) == NULL) {
@@ -470,8 +345,6 @@ int main(int argc, char **argv)
   pthread_create(&writetrd, NULL, send_requests, NULL);
   pthread_create(&readtrd, NULL, wait_responses, NULL);
   pthread_join(readtrd, NULL);
-
-        close(sockfd);
-    
+  close(sockfd);
   exit(0);
 }
