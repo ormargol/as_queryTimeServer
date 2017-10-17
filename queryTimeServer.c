@@ -315,11 +315,11 @@ void* send_requests(void* arg) {
   msg->rootdispersion=256;
   while (1) {
     gettimeofday(&tv_t1, NULL);
-    msg->org.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
-    msg->org.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
+    msg->xmt.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
+    msg->xmt.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
 
     len=48;
-  NTOHL_FP(&msg->org, &prt->org);
+  NTOHL_FP(&msg->xmt, &prt->org);
 	NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
         strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
         fprintf(stderr,"SENDING T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
