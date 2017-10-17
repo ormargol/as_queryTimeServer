@@ -266,10 +266,7 @@ void* send_requests(void* arg) {
   if (arg) { return arg; }
   int len;
   struct timeval tv_t1;
-  struct pkt *msg = (struct pkt *) malloc(sizeof(struct pkt)*1);//basic;
-  char buffer[30];
-  time_t seconds;
-  struct pkt *prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
+  struct pkt *msg = (struct pkt *) malloc(sizeof(struct pkt)*1);
   msg->li_vn_mode=227;
   msg->stratum=0;
   msg->ppoll=4;
@@ -280,17 +277,10 @@ void* send_requests(void* arg) {
     gettimeofday(&tv_t1, NULL);
     msg->xmt.Ul_i.Xl_ui= htonl((uint32_t)((tv_t1.tv_sec + JAN_1970)));
     msg->xmt.Ul_f.Xl_uf= htonl((uint32_t)tv_t1.tv_usec * (pow(2,26) / pow(5, 6)));
-
     len=48;
-  NTOHL_FP(&msg->xmt, &prt->org);
-	NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
-        strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-        fprintf(stderr,"SENDING T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
     sendto(sockfd, (char *) msg, len, 0, pcliaddr, servlen);
     sleep(1);
   }
-
-	free(prt);
 	free(msg);
 }
 
