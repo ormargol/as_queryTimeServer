@@ -261,6 +261,7 @@ void* wait_responses(void* arg) {
   struct pkt *prt;
   int n, len;
   time_t seconds;
+  uint32_t fractional;
   msg= (struct pkt *) malloc(sizeof(struct pkt)*1);
   prt= (struct pkt *) malloc(sizeof(struct pkt)*1);
 
@@ -277,22 +278,25 @@ void* wait_responses(void* arg) {
     NTOHL_FP(&msg->xmt, &prt->xmt);
 
 	  NTP_TO_UNIX(prt->org.Ul_i.Xl_ui, seconds);
-    strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-    fprintf(stderr,"T1[org]: %s.%u\n",buffer,prt->org.Ul_f.Xl_f);
+    strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
+    fractional = ((double)prt->org.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
+    fprintf(stderr,"%s.%u, ",buffer,fractional);//((double)prt->org.Ul_f.Xl_uf / pow(2, 32)) * 1000000);
 
 
 	  NTP_TO_UNIX(prt->rec.Ul_i.Xl_ui, seconds);
-    strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-    fprintf(stderr,"T2[rec]: %s.%u\n",buffer,prt->rec.Ul_f.Xl_f);
+    strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
+    fractional = ((double)prt->rec.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
+    fprintf(stderr,"%s.%u, ",buffer,fractional);//prt->rec.Ul_f.Xl_f);
 
 
 
 	  NTP_TO_UNIX(prt->xmt.Ul_i.Xl_ui, seconds);
-    strftime(buffer,30,"%m-%d-%Y  %T",localtime(&seconds));
-    fprintf(stderr,"T3[xmt]: %s.%u\n",buffer,prt->xmt.Ul_f.Xl_f);
+    strftime(buffer,30,"%m-%d-%Y %T",localtime(&seconds));
+    fractional = ((double)prt->xmt.Ul_f.Xl_uf / pow(2, 32)) * 1000000;
+    fprintf(stderr,"%s.%u, ",buffer,fractional);//prt->xmt.Ul_f.Xl_f);
 
-    strftime(buffer, 30, "%m-%d-%Y  %T", localtime(&tv_t4.tv_sec));
-    fprintf(stderr, "T4[ret]: %s.%u\n\n", buffer, (uint32_t)(tv_t4.tv_usec * (pow(2,26) / pow(5, 6))));
+    strftime(buffer, 30, "%m-%d-%Y %T", localtime(&tv_t4.tv_sec));
+    fprintf(stderr, "%s.%u\n", buffer, (uint32_t)(tv_t4.tv_usec));// * (pow(2,26) / pow(5, 6))));
   }
 	free(msg);
   free(prt);
